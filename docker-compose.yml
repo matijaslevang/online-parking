@@ -1,0 +1,166 @@
+name: online-parking
+
+services:
+  traefik:
+    image: traefik:v3.7
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./infra/traefik/tls.yml:/etc/traefik/tls.yml:ro
+      - ./infra/certs:/certs:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)
+      - traefik.http.routers.dashboard.entrypoints=websecure
+      - traefik.http.routers.dashboard.tls=true
+      - traefik.http.routers.dashboard.service=api@internal
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/create-databases.sql:/docker-entrypoint-initdb.d/create-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:?set in .env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set in .env}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HOSTNAME: https://auth.localhost
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+    volumes:
+      - ./infra/keycloak/realms:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak.rule=Host(`auth.localhost`)
+      - traefik.http.routers.keycloak.entrypoints=websecure
+      - traefik.http.routers.keycloak.tls=true
+      - traefik.http.services.keycloak.loadbalancer.server.port=8080
+
+  parking:
+    build: ./services/parking
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/parking?sslmode=disable
+      KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/parking
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.parking-api.rule=Host(`parking.localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.parking-api.entrypoints=websecure
+      - traefik.http.routers.parking-api.tls=true
+      - traefik.http.services.parking-api.loadbalancer.server.port=8080
+
+  psp:
+    build: ./services/psp
+    deploy:
+      replicas: 1
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/psp?sslmode=disable
+      KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/psp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.psp-api.rule=Host(`psp.localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.psp-api.entrypoints=websecure
+      - traefik.http.routers.psp-api.tls=true
+      - traefik.http.services.psp-api.loadbalancer.server.port=8080
+
+  bank:
+    build: ./services/bank
+    deploy:
+      replicas: 1
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/bank?sslmode=disable
+      KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/bank
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bank-api.rule=Host(`bank.localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.bank-api.entrypoints=websecure
+      - traefik.http.routers.bank-api.tls=true
+      - traefik.http.services.bank-api.loadbalancer.server.port=8080
+
+  parking-web:
+    build: ./apps/parking-web
+    volumes:
+      - ./apps/parking-web:/app
+      - /app/node_modules
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.parking-web.rule=Host(`parking.localhost`)
+      - traefik.http.routers.parking-web.entrypoints=websecure
+      - traefik.http.routers.parking-web.tls=true
+      - traefik.http.services.parking-web.loadbalancer.server.port=5173
+
+  psp-web:
+    build: ./apps/psp-web
+    volumes:
+      - ./apps/psp-web:/app
+      - /app/node_modules
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.psp-web.rule=Host(`psp.localhost`)
+      - traefik.http.routers.psp-web.entrypoints=websecure
+      - traefik.http.routers.psp-web.tls=true
+      - traefik.http.services.psp-web.loadbalancer.server.port=5174
+
+  bank-web:
+    build: ./apps/bank-web
+    volumes:
+      - ./apps/bank-web:/app
+      - /app/node_modules
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bank-web.rule=Host(`bank.localhost`)
+      - traefik.http.routers.bank-web.entrypoints=websecure
+      - traefik.http.routers.bank-web.tls=true
+      - traefik.http.services.bank-web.loadbalancer.server.port=5175
+
+volumes:
+  postgres-data:

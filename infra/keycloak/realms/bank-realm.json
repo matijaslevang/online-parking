@@ -1,0 +1,16 @@
+{
+  "realm": "bank",
+  "enabled": true,
+  "registrationAllowed": false,
+  "clients": [
+    {
+      "clientId": "bank-web",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://bank.localhost/*", "http://localhost:5175/*"],
+      "webOrigins": ["https://bank.localhost", "http://localhost:5175"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Development certificates
+infra/certs/*.pem
+
+# Go
+services/*/service
+*.test
+*.out
+
+# Node
+node_modules/
+dist/
+*.log
+
+# Expo
+.expo/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store

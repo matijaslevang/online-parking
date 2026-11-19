@@ -1,0 +1,16 @@
+{
+  "realm": "psp",
+  "enabled": true,
+  "registrationAllowed": false,
+  "clients": [
+    {
+      "clientId": "psp-web",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://psp.localhost/*", "http://localhost:5174/*"],
+      "webOrigins": ["https://psp.localhost", "http://localhost:5174"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    }
+  ]
+}
