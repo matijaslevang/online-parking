@@ -1,16 +1,107 @@
 {
   "realm": "psp",
+  "displayName": "Payment Service Provider",
   "enabled": true,
+  "sslRequired": "external",
+
   "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "verifyEmail": false,
+
+  "passwordPolicy": "length(12) and digits(1) and lowerCase(1) and notUsername() and passwordHistory(4)",
+
+  "bruteForceProtected": true,
+  "failureFactor": 10,
+  "permanentLockout": false,
+  "waitIncrementSeconds": 1800,
+  "maxFailureWaitSeconds": 1800,
+  "maxDeltaTimeSeconds": 43200,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 900,
+  "ssoSessionMaxLifespan": 36000,
+
+  "eventsEnabled": true,
+  "eventsExpiration": 31536000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyCodeReusable": false,
+
+  "roles": {
+    "realm": [
+      { "name": "super-admin", "description": "Manages the PSP and registers merchants" },
+      { "name": "merchant", "description": "Manages payment methods of one merchant" }
+    ]
+  },
+
   "clients": [
     {
       "clientId": "psp-web",
+      "name": "PSP web application",
       "publicClient": true,
       "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "redirectUris": ["https://psp.localhost/*", "http://localhost:5174/*"],
       "webOrigins": ["https://psp.localhost", "http://localhost:5174"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://psp.localhost/*##http://localhost:5174/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "psp-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "psp-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "psp-backend",
+      "name": "PSP backend (creates merchant users)",
+      "publicClient": false,
+      "secret": "${PSP_KEYCLOAK_CLIENT_SECRET}",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+
+  "users": [
+    {
+      "username": "superadmin",
+      "email": "superadmin@psp.local",
+      "firstName": "Super",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${KEYCLOAK_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["super-admin"],
+      "requiredActions": ["CONFIGURE_TOTP"]
+    },
+    {
+      "username": "service-account-psp-backend",
+      "enabled": true,
+      "serviceAccountClientId": "psp-backend",
+      "clientRoles": {
+        "realm-management": ["manage-users", "view-users"]
+      }
     }
   ]
 }

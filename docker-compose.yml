@@ -47,6 +47,9 @@ services:
       KC_HOSTNAME: https://auth.localhost
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
+      # Used as placeholders in infra/keycloak/realms/*.json during realm import.
+      KEYCLOAK_DEV_USER_PASSWORD: ${KEYCLOAK_DEV_USER_PASSWORD:?set in .env}
+      PSP_KEYCLOAK_CLIENT_SECRET: ${PSP_KEYCLOAK_CLIENT_SECRET:?set in .env}
     volumes:
       - ./infra/keycloak/realms:/opt/keycloak/data/import:ro
     depends_on:

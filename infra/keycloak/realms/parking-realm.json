@@ -1,16 +1,88 @@
 {
   "realm": "parking",
+  "displayName": "Online Parking",
   "enabled": true,
+  "sslRequired": "external",
+
   "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "verifyEmail": false,
+
+  "passwordPolicy": "length(12) and digits(1) and lowerCase(1) and notUsername() and passwordHistory(4)",
+
+  "bruteForceProtected": true,
+  "failureFactor": 10,
+  "permanentLockout": false,
+  "waitIncrementSeconds": 1800,
+  "maxFailureWaitSeconds": 1800,
+  "maxDeltaTimeSeconds": 43200,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 900,
+  "ssoSessionMaxLifespan": 36000,
+
+  "eventsEnabled": true,
+  "eventsExpiration": 31536000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+
+  "roles": {
+    "realm": [
+      { "name": "user", "description": "Driver using the parking application" },
+      {
+        "name": "default-roles-parking",
+        "description": "Roles given to every new user",
+        "composite": true,
+        "composites": { "realm": ["user"] }
+      }
+    ]
+  },
+  "defaultRole": { "name": "default-roles-parking" },
+
   "clients": [
     {
       "clientId": "parking-web",
+      "name": "Parking web application",
       "publicClient": true,
       "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "redirectUris": ["https://parking.localhost/*", "http://localhost:5173/*"],
       "webOrigins": ["https://parking.localhost", "http://localhost:5173"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://parking.localhost/*##http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "parking-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "parking-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "driver1",
+      "email": "driver1@parking.local",
+      "firstName": "Petar",
+      "lastName": "Petrović",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${KEYCLOAK_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["default-roles-parking"]
     }
   ]
 }
