@@ -97,6 +97,11 @@ services:
       # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
       KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/psp/protocol/openid-connect/certs
       KEYCLOAK_AUDIENCE: psp-api
+      # Admin API access for creating merchant users (psp-backend service account).
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: psp
+      KEYCLOAK_CLIENT_ID: psp-backend
+      KEYCLOAK_CLIENT_SECRET: ${PSP_KEYCLOAK_CLIENT_SECRET:?set in .env}
     depends_on:
       postgres:
         condition: service_healthy

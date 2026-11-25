@@ -44,6 +44,10 @@
     ]
   },
 
+  "groups": [
+    { "name": "merchants", "realmRoles": ["merchant"] }
+  ],
+
   "clients": [
     {
       "clientId": "psp-web",
