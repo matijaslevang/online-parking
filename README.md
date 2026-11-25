@@ -25,6 +25,36 @@ docs/              Project documentation
 ## Requirements
 
 - Docker with Docker Compose
+- [mkcert](https://github.com/FiloSottile/mkcert), for a trusted local HTTPS certificate
+
+## First-time setup: trusted HTTPS certificate
+
+Login does not work without this step. The browser blocks requests to Keycloak (`https://auth.localhost`) when the certificate is not trusted, and the app shows "Login failed: Failed to fetch".
+
+1. Install mkcert:
+
+   | OS | Command |
+   | --- | --- |
+   | macOS | `brew install mkcert` (and `brew install nss` for Firefox) |
+   | Windows | `choco install mkcert` or `scoop bucket add extras && scoop install mkcert` |
+   | Linux (Debian/Ubuntu) | `sudo apt install mkcert libnss3-tools` |
+
+2. Generate the certificate (asks for your password once, to trust mkcert's local certificate authority):
+
+   ```sh
+   ./infra/certs/generate.sh
+   ```
+
+   On Windows, run it in Git Bash or WSL, or run these commands in `infra/certs`:
+
+   ```sh
+   mkcert -install
+   mkcert -cert-file local-cert.pem -key-file local-key.pem localhost parking.localhost psp.localhost bank.localhost auth.localhost traefik.localhost
+   ```
+
+3. Restart the browser. If Docker is already running, also run `docker compose restart traefik`.
+
+Every team member does this on their own computer. Never share the mkcert private key (`rootCA-key.pem` in the folder shown by `mkcert -CAROOT`).
 
 ## Run everything with Docker
 
@@ -44,7 +74,7 @@ docker compose up --build
 
 Health checks: `https://<system>.localhost/api/health`. The `instance` field shows which replica answered.
 
-Without mkcert the certificate is self-signed, so the browser shows a warning and `curl` needs `-k`.
+Without mkcert, `generate.sh` creates a self-signed certificate. The browser then shows warnings and login fails (see First-time setup).
 
 Change the number of instances with `docker compose up --scale psp=3 --scale bank=3`.
 

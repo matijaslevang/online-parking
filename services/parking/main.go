@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"parking/internal/api"
+	"parking/internal/auth"
 	"parking/internal/config"
 	"parking/internal/database"
 )
@@ -20,7 +21,8 @@ func main() {
 		log.Fatalf("connect database: %v", err)
 	}
 
-	router := api.NewRouter(db)
+	authenticator := auth.NewAuthenticator(cfg.KeycloakIssuerURL, cfg.KeycloakJWKSURL, cfg.KeycloakAudience)
+	router := api.NewRouter(db, authenticator)
 
 	log.Printf("parking service listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {

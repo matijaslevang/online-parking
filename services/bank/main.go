@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"bank/internal/api"
+	"bank/internal/auth"
 	"bank/internal/config"
 	"bank/internal/database"
 )
@@ -20,7 +21,8 @@ func main() {
 		log.Fatalf("connect database: %v", err)
 	}
 
-	router := api.NewRouter(db)
+	authenticator := auth.NewAuthenticator(cfg.KeycloakIssuerURL, cfg.KeycloakJWKSURL, cfg.KeycloakAudience)
+	router := api.NewRouter(db, authenticator)
 
 	log.Printf("bank service listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {

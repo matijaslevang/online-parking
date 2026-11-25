@@ -47,6 +47,9 @@ services:
       KC_HOSTNAME: https://auth.localhost
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
+      # Used as placeholders in infra/keycloak/realms/*.json during realm import.
+      KEYCLOAK_DEV_USER_PASSWORD: ${KEYCLOAK_DEV_USER_PASSWORD:?set in .env}
+      PSP_KEYCLOAK_CLIENT_SECRET: ${PSP_KEYCLOAK_CLIENT_SECRET:?set in .env}
     volumes:
       - ./infra/keycloak/realms:/opt/keycloak/data/import:ro
     depends_on:
@@ -65,6 +68,9 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/parking?sslmode=disable
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/parking
+      # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/parking/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: parking-api
     depends_on:
       postgres:
         condition: service_healthy
@@ -88,6 +94,14 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/psp?sslmode=disable
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/psp
+      # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/psp/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: psp-api
+      # Admin API access for creating merchant users (psp-backend service account).
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: psp
+      KEYCLOAK_CLIENT_ID: psp-backend
+      KEYCLOAK_CLIENT_SECRET: ${PSP_KEYCLOAK_CLIENT_SECRET:?set in .env}
     depends_on:
       postgres:
         condition: service_healthy
@@ -111,6 +125,9 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/bank?sslmode=disable
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/bank
+      # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/bank/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: bank-api
     depends_on:
       postgres:
         condition: service_healthy

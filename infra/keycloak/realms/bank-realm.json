@@ -1,16 +1,96 @@
 {
   "realm": "bank",
+  "displayName": "Bank",
   "enabled": true,
+  "sslRequired": "external",
+
   "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "verifyEmail": false,
+
+  "passwordPolicy": "length(12) and digits(1) and lowerCase(1) and notUsername() and passwordHistory(4)",
+
+  "bruteForceProtected": true,
+  "failureFactor": 10,
+  "permanentLockout": false,
+  "waitIncrementSeconds": 1800,
+  "maxFailureWaitSeconds": 1800,
+  "maxDeltaTimeSeconds": 43200,
+  "minimumQuickLoginWaitSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 900,
+  "ssoSessionMaxLifespan": 36000,
+
+  "eventsEnabled": true,
+  "eventsExpiration": 31536000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+
+  "roles": {
+    "realm": [
+      { "name": "customer", "description": "Bank customer using the mobile application" },
+      {
+        "name": "default-roles-bank",
+        "description": "Roles given to every new user",
+        "composite": true,
+        "composites": { "realm": ["customer"] }
+      }
+    ]
+  },
+  "defaultRole": { "name": "default-roles-bank" },
+
   "clients": [
     {
-      "clientId": "bank-web",
+      "clientId": "bank-mobile",
+      "name": "Bank mobile application",
       "publicClient": true,
       "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["https://bank.localhost/*", "http://localhost:5175/*"],
-      "webOrigins": ["https://bank.localhost", "http://localhost:5175"],
-      "attributes": { "pkce.code.challenge.method": "S256" }
+      "redirectUris": ["bankmobile://*", "exp://*"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "bankmobile://*##exp://*"
+      },
+      "protocolMappers": [
+        {
+          "name": "bank-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "bank-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "customer1",
+      "email": "customer1@bank.local",
+      "firstName": "Ana",
+      "lastName": "Anić",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${KEYCLOAK_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["default-roles-bank"]
+    },
+    {
+      "username": "customer2",
+      "email": "customer2@bank.local",
+      "firstName": "Marko",
+      "lastName": "Marković",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "${KEYCLOAK_DEV_USER_PASSWORD}", "temporary": false }],
+      "realmRoles": ["default-roles-bank"]
     }
   ]
 }

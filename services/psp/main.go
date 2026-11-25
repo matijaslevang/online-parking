@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"psp/internal/api"
+	"psp/internal/auth"
 	"psp/internal/config"
 	"psp/internal/database"
+	"psp/internal/keycloak"
 )
 
 func main() {
@@ -20,7 +22,13 @@ func main() {
 		log.Fatalf("connect database: %v", err)
 	}
 
-	router := api.NewRouter(db)
+	if err := database.Migrate(db); err != nil {
+		log.Fatalf("migrate database: %v", err)
+	}
+
+	authenticator := auth.NewAuthenticator(cfg.KeycloakIssuerURL, cfg.KeycloakJWKSURL, cfg.KeycloakAudience)
+	keycloakAdmin := keycloak.NewAdminClient(cfg.KeycloakURL, cfg.KeycloakRealm, cfg.KeycloakClientID, cfg.KeycloakClientSecret)
+	router := api.NewRouter(db, authenticator, keycloakAdmin)
 
 	log.Printf("psp service listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {
