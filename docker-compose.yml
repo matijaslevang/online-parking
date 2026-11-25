@@ -70,6 +70,7 @@ services:
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/parking
       # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
       KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/parking/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: parking-api
     depends_on:
       postgres:
         condition: service_healthy
@@ -95,6 +96,7 @@ services:
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/psp
       # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
       KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/psp/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: psp-api
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,6 +122,7 @@ services:
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/bank
       # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
       KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/bank/protocol/openid-connect/certs
+      KEYCLOAK_AUDIENCE: bank-api
     depends_on:
       postgres:
         condition: service_healthy

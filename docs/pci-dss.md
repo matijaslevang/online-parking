@@ -17,7 +17,7 @@ Requirement numbers must match the official PCI DSS v4.0.1 document. Check each 
 | Requirement | Decision | Status |
 | --- | --- | --- |
 | 7.2.1 | Each system has its own Keycloak realm with its own roles. | Done |
-| 7.2.2 | Users get only the role they need (`user`, `merchant`, `super-admin`, `customer`). Backends check the role on every protected endpoint. | Planned |
+| 7.2.2 | Users get only the role they need (`user`, `merchant`, `super-admin`, `customer`). Backends check the role on every protected endpoint. | Done |
 
 ## Requirement 8 — Identify users and authenticate access
 
@@ -25,7 +25,7 @@ Requirement numbers must match the official PCI DSS v4.0.1 document. Check each 
 | --- | --- | --- |
 | 8.2.1 | Every user has a unique Keycloak account. No shared accounts. | Done |
 | 8.2.8 | Users must log in again after 15 minutes of inactivity. | Done |
-| 8.3.1 | Every request to a protected endpoint needs a valid access token. | Planned |
+| 8.3.1 | Every request to a protected endpoint needs a valid access token. Backends check its signature, issuer, audience and expiry. | Done |
 | 8.3.2 | Passwords are hashed by Keycloak and sent only over HTTPS. | Done |
 | 8.3.4 | The account is locked after 10 failed logins, for 30 minutes. | Done |
 | 8.3.5 | New PSP merchants get a temporary password and must change it on first login. | Planned |

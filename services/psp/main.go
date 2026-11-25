@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"psp/internal/api"
+	"psp/internal/auth"
 	"psp/internal/config"
 	"psp/internal/database"
 )
@@ -20,7 +21,8 @@ func main() {
 		log.Fatalf("connect database: %v", err)
 	}
 
-	router := api.NewRouter(db)
+	authenticator := auth.NewAuthenticator(cfg.KeycloakIssuerURL, cfg.KeycloakJWKSURL, cfg.KeycloakAudience)
+	router := api.NewRouter(db, authenticator)
 
 	log.Printf("psp service listening on :%s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {
