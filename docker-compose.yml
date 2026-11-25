@@ -68,6 +68,8 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/parking?sslmode=disable
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/parking
+      # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/parking/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,6 +93,8 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/psp?sslmode=disable
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/psp
+      # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/psp/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -114,6 +118,8 @@ services:
       PORT: "8080"
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/bank?sslmode=disable
       KEYCLOAK_ISSUER_URL: https://auth.localhost/realms/bank
+      # auth.localhost is not reachable inside containers, so signing keys are fetched from Keycloak directly.
+      KEYCLOAK_JWKS_URL: http://keycloak:8080/realms/bank/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
